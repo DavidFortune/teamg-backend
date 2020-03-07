@@ -48,14 +48,14 @@ app.post('/sensor', async (req: any, res: any) => {
 
     if(body.id){
         await db.doc(`sensors/${body.id}`).set({
-            body,
+            ...body,
             createdAt: new Date()
         });
         return res.status(200).send(body);
     }
     else{
         const doc = await db.collection(`sensors`).add({
-            body,
+            ...body,
             createdAt: new Date()
         });
         const sensorObj = {id: doc.id, ...body};
@@ -69,7 +69,7 @@ app.put('/sensor/:id', async (req: any, res: any) => {
     const id = req.params.id;
     const body = req.body;
 
-    await db.doc(`sensors/${id}`).update(body);
+    await db.doc(`sensors/${id}`).update({...body, updatedAt: new Date()});
     return res.status(200).send({'result': 'Sensor was updated successfully'});
 });
 
