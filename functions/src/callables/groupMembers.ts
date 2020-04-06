@@ -26,7 +26,7 @@ export const addGroupMembers = functions.https.onCall(async (data, context) => {
         if(groupRef.exists) {
 
             const group = groupRef.data();
-            if( group && (group.uid == context.auth?.uid)){ //only owner can add to sensor to group
+            if( group && (group.uid === context.auth?.uid)){ //only owner can add to sensor to group
                 const groupMemberRef = await db.collection(`groups/${data.groupId}/members`).where('email', '==', data.memberEmail).get();
 
                 if(groupMemberRef.empty){
@@ -54,7 +54,7 @@ export const removeGroupMember = functions.https.onCall( async (data, context) =
         if(groupRef.exists) {
             const group = groupRef.data();
 
-            if( group && (group.uid == context.auth?.uid)){ //only owner can add to sensor to group
+            if( group && (group.uid === context.auth?.uid)){ //only owner can add to sensor to group
                 return db.doc(`groups/${data.groupId}/members/${data.memberId}`).delete();
             }
         }

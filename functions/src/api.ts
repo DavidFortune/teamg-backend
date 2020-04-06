@@ -3,7 +3,6 @@ import * as admin from 'firebase-admin';
 import * as express from 'express';
 import * as cors from 'cors';
 
-admin.initializeApp();
 const db = admin.firestore();
 
 const app = express();
@@ -206,7 +205,7 @@ app.post('/sensor/:id/data', async (req: any, res: any) => {
 
         //TO DO: CUSTOMIZABLE TRESHOLDS
         if(processed.temp < 20){
-            sendNotifications(id, {
+            await sendNotifications(id, {
                 title: 'Increase room temperature',
                 body: 'Temperature is below 20 degrees celcius for the past 6 hours.'
             });
@@ -214,9 +213,9 @@ app.post('/sensor/:id/data', async (req: any, res: any) => {
             return true;
         }
 
-        if(processed.solarValue == 0){
+        if(processed.solarValue === 0){
 
-            sendNotifications(id, {
+            await sendNotifications(id, {
                 title: 'Insufficient Light Exposure',
                 body: 'Your plant is not receiving enough sun for the past 6 hours.'
             });
@@ -226,7 +225,7 @@ app.post('/sensor/:id/data', async (req: any, res: any) => {
 
         if(processed.soilValue < 2400){
 
-            sendNotifications(id, {
+            await sendNotifications(id, {
                 title: 'Time to water your plant',
                 body: 'Humidity of soil is being too low for the past 6 hours.'
             });

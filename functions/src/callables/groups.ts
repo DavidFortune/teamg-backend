@@ -48,7 +48,7 @@ export const updateGroup = functions.https.onCall(async (data, context) => {
 
             const group = groupRef.data();
 
-            if(group && (group.uid == context.auth?.uid)){
+            if(group && (group.uid === context.auth?.uid)){
                 await db.doc(`groups/${data.id}`).update({
                     ...data,
                     updatedAt: new Date()
