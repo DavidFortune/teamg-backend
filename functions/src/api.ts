@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as express from 'express';
 import * as cors from 'cors';
+import * as helper from './helper';
 
 const db = admin.firestore();
 
@@ -106,42 +107,6 @@ app.get('/sensor/:id/data', async (req: any, res: any) => {
 });
 
 
-async function sendNotifications(sensorId: string, notification: any){
-
-    const userRef = await db.collection(`sensors/${sensorId}/users`).get();
-
-    userRef.forEach(async (user) => {
-        const message = {
-            notification: notification,
-            topic: user.id
-        }
-
-        // Send a message to devices subscribed to the provided topic.
-        await admin.messaging().send(message)
-            .then((response) => {
-
-                //TODO: Add message to notifications
-                // Response is a message ID string.
-                console.log('Successfully sent message:', response);
-            })
-            .catch((error) => {
-                console.log('Error sending message:', error);
-            });
-    });
-}
-
-function processData(arr: any[]){
-    arr.sort(function(a, b){return b - a});  //sort
-    arr.shift();  //takeoof the biggest value
-    arr.pop(); //takeoof the lowest value
-    let sum = 0;
-    for (const value of arr) {
-        sum += value;
-    }
-    return sum / arr.length;
-}
-
-
 //store data of a sensor
 app.post('/sensor/:id/data', async (req: any, res: any) => {
 
@@ -181,10 +146,10 @@ app.post('/sensor/:id/data', async (req: any, res: any) => {
         });  
         
         //Process data out of last x readings
-        processed.humidity = processData(arrHumidity);
-        processed.temp = processData(arrTemp);
-        processed.soilValue = processData(arrSoilValue);
-        processed.solarValue = processData(arrSolarValue);
+        processed.humidity = helper.processData(arrHumidity);
+        processed.temp = helper.processData(arrTemp);
+        processed.soilValue = helper.processData(arrSoilValue);
+        processed.solarValue = helper.processData(arrSolarValue);
 
         //save readings and processed data
         const doc = await db.collection(`sensors/${id}/data`).add({
@@ -193,45 +158,16 @@ app.post('/sensor/:id/data', async (req: any, res: any) => {
             createdAt: new Date()
         });
 
+        const sensorData = (await doc.get()).data();
         const sensorObj = {
-            id: doc.id, 
-            ...body,
-            processed: processed,
-            createdAt: new Date()
+            dataId: doc.id, 
+            sensorId: id,
+            ...sensorData 
         };
 
-        await res.status(200).send(sensorObj);
+        await helper.sendNotifications(sensorObj);
 
-
-        //TO DO: CUSTOMIZABLE TRESHOLDS
-        if(processed.temp < 20){
-            await sendNotifications(id, {
-                title: 'Increase room temperature',
-                body: 'Temperature is below 20 degrees celcius for the past 6 hours.'
-            });
-
-            return true;
-        }
-
-        if(processed.solarValue === 0){
-
-            await sendNotifications(id, {
-                title: 'Insufficient Light Exposure',
-                body: 'Your plant is not receiving enough sun for the past 6 hours.'
-            });
-
-            return true;
-        }
-
-        if(processed.soilValue < 2400){
-
-            await sendNotifications(id, {
-                title: 'Time to water your plant',
-                body: 'Humidity of soil is being too low for the past 6 hours.'
-            });
-
-            return true;
-        }
+        return res.status(200).send(sensorObj);
     }
     
     return res.status(404).send({'error': `No record found for sensor id ${id}.`});
