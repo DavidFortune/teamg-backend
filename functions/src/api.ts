@@ -173,7 +173,6 @@ app.post('/sensor/:id/data', async (req: any, res: any) => {
     return res.status(404).send({'error': `No record found for sensor id ${id}.`});
 });
 
-
 //store data of a sensor
 app.post('/message/:topic', async (req: any, res: any) => {
 
@@ -198,5 +197,31 @@ app.post('/message/:topic', async (req: any, res: any) => {
             return res.status(404).send({'error': error});
         });
 });
+
+
+//fix notifications
+/*app.get('/fixnotifications', async (req: any, res: any) => {
+
+    const notificationRef = await db.collection('notifications').get();
+    console.log('test');
+    notificationRef.forEach(async (doc) => {
+
+        const data = doc.data();
+        data.category = data.type;
+        delete data.type;
+        if(!data.category){
+            data.category = 'moisture';
+        }
+
+        console.log('Notification', doc.id, data);
+        await db.doc(`notifications/${doc.id}`).set({...data});
+    });
+
+    const payload = {
+        status: 'success'
+    }
+
+    return res.status(200).send(payload);
+});*/
 
 export const api = functions.https.onRequest(app);

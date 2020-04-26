@@ -26,6 +26,9 @@ export async function sendNotifications(sensorData: any){
         if(belowTreshold && user.uid){
             const message = {
                 notification: getMessage(user.plantname, belowTreshold.type, belowTreshold.treshold, belowTreshold.treshold.value),
+                data: {
+                    sensorId: sensorData.sensorId,
+                },
                 topic: user.uid
             };
 
@@ -36,7 +39,7 @@ export async function sendNotifications(sensorData: any){
                         ...message,
                         messageId: response,
                         sensorId: sensorData.sensorId,
-                        type: belowTreshold.type,
+                        category: belowTreshold.type,
                         timestamp: new Date()
                     });
                     // Response is a message ID string.
@@ -57,11 +60,13 @@ function checkTreshold(processed: any, tresholds: any){
 
     if(processed.soilValue > tresholds.moisture){
 
-        let treshold = (tresholds.moisture / 2500) * 100;
+        //const zero = 1300;
+
+        let treshold = (tresholds.moisture / 3000) * 100;
         treshold = 100 - Math.round(treshold);
 
-        let value = (processed.soilValue / 2500) * 100;
-        value = 100 - Math.round(value) * 2;
+        let value = (processed.soilValue / 3000) * 100;
+        value = 100 - Math.round(value);
         
         return {
             type: 'moisture',
@@ -78,10 +83,10 @@ function checkTreshold(processed: any, tresholds: any){
     }
     else if((processed.solarValue < tresholds.luminosity) && (16 < now.getHours()) && (now.getHours() < 23) ){
 
-        let treshold = (tresholds.luminosity / 2000) * 100;
+        let treshold = (tresholds.luminosity / 2300) * 100;
         treshold = Math.round(treshold);
 
-        let value = (processed.solarValue / 2000) * 100;
+        let value = (processed.solarValue / 2300) * 100;
         value = Math.round(value);
 
         return {
